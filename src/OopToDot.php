@@ -41,7 +41,7 @@ class OopToDot
             foreach ($array as $values) {
                 if (isset($values['implements'])) {
                     foreach ($values['implements'] as $implement) {
-                        if (isset($file_index[$implement])) {
+                        if (isset($file_index[$implement]) && is_file($file_index[$implement]['file'])) {
                             if (!isset($loaded_files[$implement])) {
                                 $source = json_decode(file_get_contents($file_index[$implement]['file']), true);
                                 $loaded_files[$implement] = true;
@@ -49,14 +49,15 @@ class OopToDot
                                 $array = array_merge($array, $source);
                             }
                         } else {
-                            echo 'Not found: ' . $implement . PHP_EOL;
+                            $filename = $file_index[$implement]['file'] ?? '';
+                            echo "Not found: {$implement} (Filename: '{$filename}')" . PHP_EOL;
                             $loaded_files[$implement] = true;
                         }
                     }
                 }
                 if (isset($values['traits'])) {
                     foreach ($values['traits'] as $trait) {
-                        if (isset($file_index[$trait])) {
+                        if (isset($file_index[$trait]) && is_file($file_index[$trait]['file'])) {
                             if (!isset($loaded_files[$trait])) {
                                 $source = json_decode(file_get_contents($file_index[$trait]['file']), true);
                                 $loaded_files[$trait] = true;
@@ -64,13 +65,14 @@ class OopToDot
                                 $array = array_merge($array, $source);
                             }
                         } else {
-                            echo 'Not found: ' . $trait . PHP_EOL;
+                            $filename = $file_index[$trait]['file'] ?? '';
+                            echo "Not found: {$trait} (Filename: '{$filename}')" . PHP_EOL;
                             $loaded_files[$trait] = true;
                         }
                     }
                 }
                 if (isset($values['extends'])) {
-                    if (isset($file_index[$values['extends']])) {
+                    if (isset($file_index[$values['extends']]) && is_file($file_index[$values['extends']]['file'])) {
                         if (!isset($loaded_files[$values['extends']])) {
                             $source = json_decode(file_get_contents($file_index[$values['extends']]['file']), true);
                             $loaded_files[$values['extends']] = true;
@@ -79,7 +81,8 @@ class OopToDot
 
                         }
                     } else {
-                        echo 'Not found: ' . $values['extends'] . PHP_EOL;
+                        $filename = $file_index[$values['extends']]['file'] ?? '';
+                        echo "Not found: {$values['extends']} (Filename: '{$filename}')" . PHP_EOL;
                         $loaded_files[$values['extends']] = true;
                     }
                 }
@@ -248,7 +251,11 @@ class OopToDot
                     if ($parameter['type'] == null) {
                         $parameter['type'] = 'mixed';
                     }
-                    $parameters[] = $parameter['name'] . ' : ' . $parameter['type'];
+                    $tempType = $parameter['type'];
+                    if (is_array($tempType)) {
+                        $tempType = $parameter['type']['parts'][0];
+                    }
+                    $parameters[] = $parameter['name'] . ' : ' . $tempType;
                 }
                 $parameters = implode(', ', $parameters);
                 $result[] = '<tr><td align="left"' . $methodUrl . ' title="' . $t . '">' . $s . '(' . $parameters . ')</td></tr>';
